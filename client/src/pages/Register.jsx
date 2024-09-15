@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 
 const Register = () => {
   const [inputs, setInputs] = useState({
@@ -8,6 +9,10 @@ const Register = () => {
     email: "",
     password: "",
   });
+
+  const [err, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   const handleChange = (event) => {
     setInputs((prev) => ({ ...prev, [event.target.name]: event.target.value }));
@@ -23,7 +28,9 @@ const Register = () => {
         },
       });
       console.log(res);
+      navigate("/");
     } catch (error) {
+      setError(error.response.data);
       console.log(error);
     }
   };
@@ -54,7 +61,7 @@ const Register = () => {
           onChange={handleChange}
         />
         <button onClick={handleSubmit}>Register</button>
-        <p>This is an error message</p>
+        {err && <p>This is an error message</p>}
         <span>
           Don't you have an account?
           <Link to="/login">Log in</Link>

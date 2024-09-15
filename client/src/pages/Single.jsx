@@ -1,49 +1,78 @@
-import React from "react";
+import React, { useContext, useState, useEffect } from "react";
 import Edit from "../img/edit.png";
 import Delete from "../img/delete.png";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Menu from "../components/Menu";
+import moment from "moment";
+import { AuthContext } from "../context/AuthContext";
+import axios from "axios";
 
 const Single = () => {
+  const navigate = useNavigate();
+
+  const [post, setPost] = useState({});
+
+  const location = useLocation();
+
+  const postId = location.pathname.split("/")[2];
+
+  const { currentUser } = useContext(AuthContext);
+
+  console.log(post + "111");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`/api/posts/${postId}`);
+        setPost(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, [postId]);
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/api/posts/${postId}`);
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getText = (html) => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent;
+  };
+
   return (
     <div className="single">
       <div className="content">
-        <img
-          src="https://images.pexels.com/photos/7008010/pexels-photo-7008010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-          alt=""
-        />
+        <img src={`../public/upload/${post?.img}`} alt="" />
         <div className="user">
-          <img
-            src="https://images.pexels.com/photos/7008010/pexels-photo-7008010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-            alt=""
-          />
+          {post.userImg && <img src={post.userImg} alt="" />}
           <div className="info">
-            <span>John</span>
-            <p>Posted 2 days ago</p>
+            <span>{post.username}</span>
+            <p>Posted {moment(post.date).fromNow()}</p>
           </div>
-          <div className="edit">
-            <Link to="/write?edit=2">
-              {" "}
-              <img src={Edit} alt="" />
-            </Link>
-            <Link>
-              {" "}
-              <img src={Delete} alt="" />
-            </Link>
-          </div>
+          {currentUser
+            ? currentUser.username === post.username && (
+                <div className="edit">
+                  <Link to="/write" state={post}>
+                    <img src={Edit} alt="" />
+                  </Link>
+                  <Link>
+                    <img onClick={handleDelete} src={Delete} alt="" />
+                  </Link>
+                </div>
+              )
+            : null}
         </div>
-        <h1>Lorem ipsum dolor sit amet consectetur adipisicing elit</h1>
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-          minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-          aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.
-        </p>
+        <h1>{post.title}</h1>
+        {getText(post.desc)}
       </div>
-      <Menu />
+      <Menu cat={post.cat} />
     </div>
   );
 };
